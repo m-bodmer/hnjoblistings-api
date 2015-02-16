@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
+	"io/ioutil"
+	"net/http"
 )
 
 /*
@@ -78,22 +82,61 @@ type Story struct {
 //     });
 //   })
 
-func (client ApiClient) getUser(name string) (User, error) {
+func (client ApiClient) GetUser(name string) (User, error) {
 	// Attempt to get the user name using the HN api
-	return User, nil
+	url := client.BaseURI + client.Version + "/user/" + name + client.Suffix
+
+	var u User
+
+	body, err := client.MakeHTTPRequest(url)
+	if err != nil {
+		return u, err
+	}
+
+	err = json.Unmarshal(body, &u)
+	if err != nil {
+		return u, err
+	}
+
+	fmt.Println(u)
+
+	return u, nil
 }
 
-func (client ApiClient) getHiringPost() (Story, error) {
+func (client ApiClient) GetHiringPost() (Story, error) {
 	// Retrieve an list of posts from the who-is-hiring bot and filter to find this months Who is Hiring post
 	// Returns: A [data structure] of posts
 
 	// Make call to API to look for the 'whoishiring' user
-	// user, err := client.GetUser("whoishiring")
+	u, err := client.GetUser("whoishiring")
 
-	// if err != nil {
-	// 	return user, err
-	// }
+	if err != nil {
+		fmt.Println(u)
+		fmt.Println(err)
+	}
 
+	// Find the users hiring post
+	// url := client.BaseURI + client.Version + "/item" +
+	// fmt.Println(client)
+	return Story{}, nil
+}
+
+func (client ApiClient) MakeHTTPRequest(url string) ([]byte, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf(http.StatusText(http.StatusNotFound))
+	}
+	return body, nil
 }
 
 func main() {
@@ -105,7 +148,9 @@ func main() {
 
 	server.Get("/listings", func(r render.Render) {
 		// Return a formatted JSON object of 50 job listings along with their keywords for location, job type, etc
-		post, err := client.getHiringPost()
+		post, err := client.GetHiringPost()
+
+		fmt.Println(err)
 		r.JSON(200, post)
 	})
 
