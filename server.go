@@ -13,14 +13,14 @@ Description = text
 Subcomments = # of Kids
 */
 
-type ApiConfig struct {
+type ApiClient struct {
 	BaseURI string
 	Version string
 	Suffix  string
 }
 
-func NewApiConfig() ApiConfig {
-	return ApiConfig{
+func NewApiClient() ApiClient {
+	return ApiClient{
 		BaseURI: "https://hacker-news.firebaseio.com/",
 		Version: "v0",
 		Suffix:  ".json",
@@ -78,12 +78,12 @@ type Story struct {
 //     });
 //   })
 
-func (config ApiConfig) getUser(name string) (User, error) {
+func (client ApiClient) getUser(name string) (User, error) {
 	// Attempt to get the user name using the HN api
 	return User, nil
 }
 
-func (config ApiConfig) getHiringPost() (Story, error) {
+func (client ApiClient) getHiringPost() (Story, error) {
 	// Retrieve an list of posts from the who-is-hiring bot and filter to find this months Who is Hiring post
 	// Returns: A [data structure] of posts
 
@@ -101,11 +101,11 @@ func main() {
 	// Use martini contrib render middleware
 	server.Use(render.Renderer())
 
-	config := NewApiConfig()
+	client := NewApiClient()
 
 	server.Get("/listings", func(r render.Render) {
 		// Return a formatted JSON object of 50 job listings along with their keywords for location, job type, etc
-		post, err := config.getHiringPost()
+		post, err := client.getHiringPost()
 		r.JSON(200, post)
 	})
 
