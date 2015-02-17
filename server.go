@@ -7,6 +7,7 @@ import (
 	"github.com/martini-contrib/render"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 /*
@@ -33,8 +34,9 @@ func NewApiClient() ApiClient {
 
 // HN User
 // See https://github.com/HackerNews/API#users for definition
+
+// TODO: See if Martini has its own conventions around json
 type User struct {
-	// TODO: How to represent json correctly?
 	ID        string `json:"id"`
 	Delay     int    `json:"delay"`
 	Created   int    `json:"created"`
@@ -55,32 +57,20 @@ type Story struct {
 	URL   string `json:"url"`
 }
 
-// var storyFound,
-//     titleNeedle = 'Ask HN: Who is hiring?',
-//     titleRegexp = new RegExp(titleNeedle),
-//     count = 0;
+// TODO: Figure out Item struct definition
+type Item struct {
+}
 
-//   promiseWhile(function() {
-//     // Shouldn't look for more than 5 submissions ... for now
-//     return count < 5;
-//   }, function() {
-//     // Look for the first Who is hiring post
-//     return new Promise(function(resolve, reject) {
-//       var submission = submissions[count];
+func (client ApiClient) GetItem(id int) (Item, error) {
+	url := client.BaseURI + client.Version + "/item/" + strconv.Itoa(id) + client.Suffix
 
-//       hn.item(submission, function(err, item) {
-//         if (!err) {
-//           if (titleRegexp.test(item.title) && item.type === 'story') {
-//             storyFound = true;
-//             return callback(item);
-//           }
+	body, err := client.MakeHTTPRequest(url)
+	if err != nil {
+		return {}, err
+	}
 
-//           count++;
-//           resolve();
-//         }
-//       });
-//     });
-//   })
+	return Item{}, nil
+}
 
 func (client ApiClient) GetUser(name string) (User, error) {
 	// Attempt to get the user name using the HN api
@@ -98,8 +88,6 @@ func (client ApiClient) GetUser(name string) (User, error) {
 		return u, err
 	}
 
-	fmt.Println(u)
-
 	return u, nil
 }
 
@@ -110,17 +98,24 @@ func (client ApiClient) GetHiringPost() (Story, error) {
 	// Make call to API to look for the 'whoishiring' user
 	u, err := client.GetUser("whoishiring")
 
+	// Iterate the first 5 items belonging to the user
+	// Make a request to the HN Api for each item to get all item details
+	// Find the item title that contains 'Ask HN: Who is hiring?' in the title and the type of the item is a story
+	fmt.Println("User details are: ")
+	fmt.Println(u)
+
+	// TODO: Learn how to do for each loops
+
 	if err != nil {
-		fmt.Println(u)
 		fmt.Println(err)
+		fmt.Println(u)
 	}
 
-	// Find the users hiring post
-	// url := client.BaseURI + client.Version + "/item" +
-	// fmt.Println(client)
+	// TODO: Return populated struct
 	return Story{}, nil
 }
 
+// TODO: See if Martini has this function built in
 func (client ApiClient) MakeHTTPRequest(url string) ([]byte, error) {
 	response, err := http.Get(url)
 	if err != nil {
